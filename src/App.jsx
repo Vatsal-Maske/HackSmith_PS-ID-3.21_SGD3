@@ -6,6 +6,8 @@ import DashboardPage from './pages/DashboardPage.jsx'
 import MapPage from './pages/MapPage.jsx'
 import RiskAnalysisPage from './pages/RiskAnalysisPage.jsx'
 
+import ReportsPage from './pages/ReportsPage.jsx'
+
 const pageTitle = {
   dashboard: 'Dashboard',
   map: 'Live AQI Map',
@@ -22,7 +24,8 @@ export default function App() {
   const main = useMemo(() => {
     if (active === 'dashboard') return <DashboardPage city={city} />
     if (active === 'map') return <MapPage city={city} />
-    if (active === 'risk') return <RiskAnalysisPage />
+    if (active === 'risk') return <RiskAnalysisPage city={city} />
+    if (active === 'reports') return <ReportsPage city={city} />
     return <ComingSoon title={pageTitle[active] || 'Page'} />
   }, [active, city])
 
