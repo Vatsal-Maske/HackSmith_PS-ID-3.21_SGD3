@@ -124,6 +124,45 @@ app.get('/api/aqi', async (req, res) => {
   }
 });
 
+// GET /api/cities
+app.get('/api/cities', (req, res) => {
+  // Return a list of supported cities (can be expanded)
+  const cities = ['New Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Pune', 'Hyderabad', 'Jaipur'];
+  res.json(cities);
+});
+
+// GET /api/heatmap
+app.get('/api/heatmap', async (req, res) => {
+  const cities = ['New Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai'];
+  try {
+    const heatmapData = await Promise.all(
+      cities.map(async (city) => {
+        try {
+          const { lat, lon } = await geocodeCity(city);
+          let aqiData;
+          try {
+            aqiData = await fetchAQIOpenWeather(lat, lon);
+          } catch {
+            aqiData = await fetchAQIAQICN(city);
+          }
+          return {
+            city,
+            lat,
+            lon,
+            aqi: aqiData.aqi,
+          };
+        } catch {
+          return { city, lat: null, lon: null, aqi: null };
+        }
+      })
+    );
+    res.json(heatmapData);
+  } catch (err) {
+    console.error('Heatmap endpoint error:', err.message);
+    res.status(500).json({ error: 'Unable to fetch heatmap data' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
