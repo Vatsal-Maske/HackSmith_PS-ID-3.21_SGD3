@@ -3,6 +3,8 @@ import Header from './components/Header.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import ComingSoon from './components/ComingSoon.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
+import MapPage from './pages/MapPage.jsx'
+import RiskAnalysisPage from './pages/RiskAnalysisPage.jsx'
 
 const pageTitle = {
   dashboard: 'Dashboard',
@@ -19,6 +21,8 @@ export default function App() {
 
   const main = useMemo(() => {
     if (active === 'dashboard') return <DashboardPage city={city} />
+    if (active === 'map') return <MapPage city={city} />
+    if (active === 'risk') return <RiskAnalysisPage />
     return <ComingSoon title={pageTitle[active] || 'Page'} />
   }, [active, city])
 

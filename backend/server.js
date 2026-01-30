@@ -53,6 +53,28 @@ async function geocodeCity(city) {
   }
 }
 
+// Calculate AQI from PM2.5 (US EPA standard)
+function calculateAQI(pm25) {
+  const c = Math.round(pm25 * 10) / 10;
+  if (c >= 0 && c < 12.1) {
+    return Math.round(((50 - 0) / (12.0 - 0)) * (c - 0) + 0);
+  } else if (c >= 12.1 && c < 35.5) {
+    return Math.round(((100 - 51) / (35.4 - 12.1)) * (c - 12.1) + 51);
+  } else if (c >= 35.5 && c < 55.5) {
+    return Math.round(((150 - 101) / (55.4 - 35.5)) * (c - 35.5) + 101);
+  } else if (c >= 55.5 && c < 150.5) {
+    return Math.round(((200 - 151) / (150.4 - 55.5)) * (c - 55.5) + 151);
+  } else if (c >= 150.5 && c < 250.5) {
+    return Math.round(((300 - 201) / (250.4 - 150.5)) * (c - 150.5) + 201);
+  } else if (c >= 250.5 && c < 350.5) {
+    return Math.round(((400 - 301) / (350.4 - 250.5)) * (c - 250.5) + 301);
+  } else if (c >= 350.5 && c < 500.5) {
+    return Math.round(((500 - 401) / (500.4 - 350.5)) * (c - 350.5) + 401);
+  } else {
+    return 500;
+  }
+}
+
 // Fetch AQI from OpenWeatherMap
 async function fetchAQIOpenWeather(lat, lon) {
   const url = `${OPENWEATHER_BASE}?lat=${lat}&lon=${lon}&appid=${process.env.OPENWEATHER_API_KEY}`;
@@ -61,10 +83,15 @@ async function fetchAQIOpenWeather(lat, lon) {
     const list = res.data.list?.[0];
     if (!list) throw new Error('No AQI data');
     const components = list.components;
+
+    // Calculate real AQI from PM2.5 because OpenWeather only returns 1-5 index
+    const calculatedAQI = calculateAQI(components.pm2_5 || 0);
+
     return {
-      aqi: list.main.aqi,
+      aqi: calculatedAQI, // Now returns 0-500 scale
       pm2_5: components.pm2_5 || 0,
       pm10: components.pm10 || 0,
+      openWeatherIndex: list.main.aqi // Keep original 1-5 index just in case
     };
   } catch (err) {
     console.error('OpenWeather AQI error:', err.message);
@@ -105,7 +132,7 @@ app.get('/api/heatmap', async (req, res) => {
       { city: 'Pune', lat: 18.5204, lon: 73.8567, aqi: 78, intensity: 0.4 },
       { city: 'Ahmedabad', lat: 23.0225, lon: 72.5714, aqi: 112, intensity: 0.6 }
     ];
-    
+
     res.json(heatmapData);
   } catch (err) {
     console.error('Heatmap endpoint error:', err.message);
@@ -119,26 +146,37 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Server is working!' });
 });
 
+// Supported Indian cities list
+const SUPPORTED_CITIES = [
+  'Mumbai', 'Delhi', 'New Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur',
+  'Lucknow', 'Kanpur', 'Nagpur', 'Indore', 'Thane', 'Bhopal', 'Visakhapatnam', 'Pimpri-Chinchwad', 'Patna', 'Vadodara',
+  'Ghaziabad', 'Ludhiana', 'Agra', 'Nashik', 'Faridabad', 'Meerut', 'Rajkot', 'Kalyan-Dombivli', 'Vasai-Virar', 'Varanasi',
+  'Srinagar', 'Aurangabad', 'Dhanbad', 'Amritsar', 'Navi-Mumbai', 'Allahabad', 'Ranchi', 'Howrah', 'Coimbatore', 'Jabalpur',
+  'Gwalior', 'Vijayawada', 'Jodhpur', 'Madurai', 'Raipur', 'Kota', 'Chandigarh', 'Guwahati', 'Solapur', 'Hubli-Dharwad',
+  'Tiruchirappalli', 'Bareilly', 'Moradabad', 'Mysore', 'Tiruppur', 'Gurgaon', 'Aligarh', 'Jalandhar', 'Bhubaneswar', 'Salem',
+  'Mira-Bhayandar', 'Thiruvananthapuram', 'Bhiwandi', 'Saharanpur', 'Gorakhpur', 'Guntur', 'Bikaner', 'Dhule', 'Nanded',
+  'Kollam', 'Ajmer', 'Akola', 'Latur', 'Kochi', 'Bhavnagar', 'Karnal'
+];
+
 // GET /api/aqi?city=<city_or_area_name>
 app.get('/api/aqi', async (req, res) => {
   const { city } = req.query;
   console.log('Received request for city:', city);
-  
+
   if (!city) {
     return res.status(400).json({ error: 'City query parameter is required' });
   }
-  
-  // Only allow Indian cities
-  const indianCities = ['mumbai', 'delhi', 'new delhi', 'bangalore', 'hyderabad', 'chennai', 'kolkata', 'pune', 'ahmedabad', 'jaipur', 'lucknow', 'kanpur', 'nagpur', 'indore', 'thane', 'bhopal', 'visakhapatnam', 'pimpri-chinchwad', 'patna', 'vadodara', 'ghaziabad', 'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut', 'rajkot', 'kalyan-dombivli', 'vasai-virar', 'varanasi', 'srinagar', 'aurangabad', 'dhanbad', 'amritsar', 'navi-mumbai', 'allahabad', 'ranchi', 'howrah', 'coimbatore', 'jabalpur', 'gwalior', 'vijayawada', 'jodhpur', 'madurai', 'raipur', 'kota', 'chandigarh', 'guwahati', 'solapur', 'hubli-dharwad', 'tiruchirappalli', 'bareilly', 'moradabad', 'mysore', 'tiruppur', 'gurgaon', 'aligarh', 'jalandhar', 'bhubaneswar', 'salem', 'mira-bhayandar', 'thiruvananthapuram', 'bhiwandi', 'saharanpur', 'gorakhpur', 'guntur', 'bikaner', 'rajkot', 'dhule', 'nanded', 'kollam', 'ajmer', 'akola', 'latur', 'kochi', 'bhavnagar', 'karnal', 'kochi'];
-  
+
   const cityLower = city.toLowerCase();
+  const supportedLower = SUPPORTED_CITIES.map(c => c.toLowerCase());
+
   console.log('City lower:', cityLower);
-  console.log('Is Indian city:', indianCities.includes(cityLower));
-  
-  if (!indianCities.includes(cityLower)) {
-    return res.status(400).json({ error: 'Only Indian cities are supported. Please try cities like Mumbai, Delhi, Bangalore, etc.' });
+  console.log('Is Indian city:', supportedLower.includes(cityLower));
+
+  if (!supportedLower.includes(cityLower)) {
+    return res.status(400).json({ error: 'Only Indian cities are supported. Please try a major Indian city.' });
   }
-  
+
   try {
     // Use hardcoded coordinates for major Indian cities to avoid geocoding issues
     let lat, lon;
@@ -155,7 +193,7 @@ app.get('/api/aqi', async (req, res) => {
       'jaipur': { lat: 26.9124, lon: 75.7873 },
       'lucknow': { lat: 26.8467, lon: 80.9462 }
     };
-    
+
     if (cityCoords[cityLower]) {
       lat = cityCoords[cityLower].lat;
       lon = cityCoords[cityLower].lon;
@@ -166,7 +204,7 @@ app.get('/api/aqi', async (req, res) => {
       lon = coords.lon;
       console.log('Using geocoded coords:', lat, lon);
     }
-    
+
     let aqiData;
     try {
       console.log('Fetching OpenWeather AQI...');
@@ -201,9 +239,8 @@ app.get('/api/aqi', async (req, res) => {
 
 // GET /api/cities
 app.get('/api/cities', (req, res) => {
-  // Return a list of supported cities (can be expanded)
-  const cities = ['New Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Pune', 'Hyderabad', 'Jaipur'];
-  res.json(cities);
+  // Return the full list of supported cities
+  res.json(SUPPORTED_CITIES);
 });
 
 // GET /api/heatmap

@@ -1,100 +1,155 @@
-import { Map, Navigation } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { Map as MapIcon, Navigation } from 'lucide-react'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import Card from './Card.jsx'
 
-function legendDotClass(tone) {
-  if (tone === 'low' || tone === 'good') return 'bg-emerald-500'
-  if (tone === 'medium' || tone === 'moderate') return 'bg-amber-400'
-  if (tone === 'high' || tone === 'unhealthy') return 'bg-rose-500'
-  return 'bg-slate-400'
-}
+export default function MapPanel({ heatmapData = [], activeCity }) {
+  const mapContainerRef = useRef(null)
+  const mapInstanceRef = useRef(null)
+  const markersRef = useRef([])
 
-function getRiskTone(aqi) {
-  if (aqi < 100) return 'low'
-  if (aqi <= 200) return 'medium'
-  return 'high'
-}
+  // Initialize Map
+  useEffect(() => {
+    if (!mapContainerRef.current) return
 
-export default function MapPanel({ heatmapData = [] }) {
-  // Simple projection: map lat/lon to % positions for India view
-  const project = (lat, lon) => {
-    const x = ((lon - 68) / (97 - 68)) * 100 // India lon range ~68-97
-    const y = ((37 - lat) / (37 - 8)) * 100 // India lat range ~8-37
-    return { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) }
-  }
+    // Prevent double initialization
+    if (mapInstanceRef.current) return
+
+    try {
+      const map = L.map(mapContainerRef.current, {
+        center: [20.5937, 78.9629], // India
+        zoom: 5,
+        zoomControl: false,
+        attributionControl: false
+      })
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map)
+
+      L.control.zoom({ position: 'bottomright' }).addTo(map)
+
+      mapInstanceRef.current = map
+    } catch (error) {
+      console.error("Map initialization failed:", error);
+    }
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove()
+        mapInstanceRef.current = null
+      }
+    }
+  }, [])
+
+  // Update Markers & View
+  useEffect(() => {
+    const map = mapInstanceRef.current
+    if (!map) return
+
+    // Clear existing markers
+    markersRef.current.forEach(m => m.remove())
+    markersRef.current = []
+
+    // Add Heatmap Dots
+    heatmapData.forEach(d => {
+      if (d.lat && d.lon && d.aqi) {
+        const color = d.aqi < 100 ? '#10b981' : d.aqi <= 200 ? '#f59e0b' : '#ef4444'
+        const marker = L.circleMarker([d.lat, d.lon], {
+          radius: 5,
+          fillColor: color,
+          color: '#fff',
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.8
+        }).addTo(map);
+        marker.bindPopup(`<b>${d.city}</b><br>AQI: ${d.aqi}`)
+        markersRef.current.push(marker)
+      }
+    })
+
+    // Focus Active City
+    if (activeCity?.latitude && activeCity?.longitude) {
+      const { latitude, longitude, city, aqi } = activeCity
+
+      // Fly to location
+      map.flyTo([latitude, longitude], 12, { duration: 1.5 })
+
+      // Add Pulse Marker (Custom HTML Icon)
+      const pulseIcon = L.divIcon({
+        className: 'custom-pulse-icon',
+        html: `<div style="
+            position: relative;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          ">
+            <span style="
+               position: absolute;
+               width: 100%;
+               height: 100%;
+               background-color: ${aqi > 200 ? '#ef4444' : aqi > 100 ? '#f59e0b' : '#10b981'};
+               border-radius: 50%;
+               opacity: 0.75;
+               animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+            "></span>
+            <span style="
+               position: relative;
+               width: 10px;
+               height: 10px;
+               background-color: ${aqi > 200 ? '#ef4444' : aqi > 100 ? '#f59e0b' : '#10b981'};
+               border-radius: 50%;
+               border: 2px solid white;
+            "></span>
+          </div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      })
+
+      const mainMarker = L.marker([latitude, longitude], { icon: pulseIcon }).addTo(map)
+      mainMarker.bindPopup(`
+          <div style="text-align: center;">
+            <div style="font-weight: bold; margin-bottom: 2px;">${city}</div>
+            <div style="font-size: 10px; color: #64748b;">AQI ${aqi}</div>
+          </div>
+       `).openPopup()
+
+      markersRef.current.push(mainMarker)
+    }
+
+  }, [activeCity, heatmapData])
 
   return (
-    <Card className="overflow-hidden">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-          <Map size={18} className="text-brand-700" />
-          Heat Map (AQI)
-        </div>
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-        >
-          <Navigation size={16} />
-          Center
-        </button>
-      </div>
-
-      <div className="relative">
-        <div className="grid h-[360px] w-full place-items-center bg-gradient-to-br from-sky-50 via-white to-emerald-50 md:h-[420px]">
-          <div className="text-center">
-            <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-white text-brand-700 shadow-soft ring-1 ring-slate-100">
-              <Map size={22} />
-            </div>
-            <div className="mt-3 text-sm font-semibold text-slate-900">Live AQI Map</div>
-            <div className="mt-1 max-w-[520px] text-xs text-slate-600">
-              Colored circles show real AQI for each city. Hover to see details.
-            </div>
+    <Card className="flex flex-col h-full bg-white shadow-sm border border-slate-200 overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white z-10">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+            <MapIcon size={20} />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-800 leading-none">Air Quality Map</h3>
+            <p className="text-xs text-slate-500 mt-1">Live coverage across India</p>
           </div>
         </div>
-
-        {/* Real heatmap circles */}
-        <div className="pointer-events-none absolute inset-0">
-          {heatmapData
-            .filter(d => d.lat != null && d.lon != null && d.aqi != null)
-            .map(d => {
-              const { x, y } = project(d.lat, d.lon)
-              const tone = getRiskTone(d.aqi)
-              return (
-                <div
-                  key={d.city}
-                  className="group absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-125"
-                  style={{
-                    left: `${x}%`,
-                    top: `${y}%`,
-                    backgroundColor: tone === 'low' ? '#10b981' : tone === 'medium' ? '#f59e0b' : '#ef4444',
-                    opacity: 0.8,
-                  }}
-                >
-                  <span className="hidden whitespace-nowrap rounded-lg bg-slate-900 px-2 py-1 text-xs text-white shadow-lg group-hover:absolute group-hover:-top-8 group-hover:block">
-                    {d.city}: AQI {d.aqi}
-                  </span>
-                </div>
-              )
-            })}
-        </div>
-
-        <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2 rounded-2xl bg-white/90 p-3 shadow-soft ring-1 ring-white/40 backdrop-blur md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-700">
-            <div className="flex items-center gap-2">
-              <span className={'h-2.5 w-2.5 rounded-full ' + legendDotClass('low')} />
-              Low
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={'h-2.5 w-2.5 rounded-full ' + legendDotClass('medium')} />
-              Medium
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={'h-2.5 w-2.5 rounded-full ' + legendDotClass('high')} />
-              High
-            </div>
+        {activeCity?.city && (
+          <div className="px-3 py-1 bg-slate-100 rounded-full text-xs font-semibold text-slate-600 border border-slate-200">
+            {activeCity.city}
           </div>
-          <div className="text-xs text-slate-600">Green = Low, Yellow = Medium, Red = High AQI</div>
-        </div>
+        )}
       </div>
+
+      <div className="flex-1 relative w-full h-[400px] bg-slate-50">
+        <div ref={mapContainerRef} className="absolute inset-0 z-0" style={{ minHeight: '400px', width: '100%' }} />
+      </div>
+
+      <style>{`
+        @keyframes ping {
+          75%, 100% { transform: scale(2); opacity: 0; }
+        }
+      `}</style>
     </Card>
   )
 }

@@ -4,7 +4,7 @@ import AlertsPanel from '../components/AlertsPanel.jsx';
 import ApiPanel from '../components/ApiPanel.jsx';
 import AqiTrendChart from '../components/AqiTrendChart.jsx';
 import MapPanel from '../components/MapPanel.jsx';
-import RiskBarChart from '../components/RiskBarChart.jsx';
+import RiskAnalysisPanel from '../components/RiskAnalysisPanel.jsx';
 import StatCard from '../components/StatCard.jsx';
 
 // Dummy alerts and API info (can be made dynamic later)
@@ -43,23 +43,6 @@ export default function DashboardPage({ city }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true);
-        setError(null);
-        const [aqi, heatmap] = await Promise.all([
-          fetchAQI(city || 'New Delhi'),
-          fetchHeatmap(),
-        ]);
-        setAqiData(aqi);
-        setHeatmapData(heatmap);
-      } catch (err) {
-        setError('Failed to load data');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
     loadData();
   }, [city]);
 
@@ -79,7 +62,24 @@ export default function DashboardPage({ city }) {
     );
   }
 
-  if (!aqiData) return null;
+  if (!aqiData) return null; async function loadData() {
+    try {
+      setLoading(true);
+      setError(null);
+      const [aqi, heatmap] = await Promise.all([
+        fetchAQI(city || 'New Delhi'),
+        fetchHeatmap(),
+      ]);
+      setAqiData(aqi);
+      setHeatmapData(heatmap);
+    } catch (err) {
+      setError('Failed to load data');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
 
   // Prepare chart data (mock 7-day trend for now; replace with historical API later)
   const aqiTrend7d = [
@@ -130,29 +130,21 @@ export default function DashboardPage({ city }) {
         />
       </div>
 
+      {/* Row 2: Main Charts & Alerts */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <MapPanel heatmapData={heatmapData} />
+        <div className="xl:col-span-2 h-full">
+          <AqiTrendChart data={aqiTrend7d} />
         </div>
-        <div className="xl:col-span-1">
+        <div className="xl:col-span-1 h-full">
           <AlertsPanel items={alerts} />
         </div>
       </div>
 
+      {/* Row 3: Info */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <AqiTrendChart data={aqiTrend7d} />
-        </div>
-        <div className="xl:col-span-1">
-          <RiskBarChart data={riskByArea} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        <div className="xl:col-span-3">
           <ApiPanel endpoint={apiInfo.endpoint} />
         </div>
-        <div className="lg:col-span-1" />
       </div>
     </div>
   );
