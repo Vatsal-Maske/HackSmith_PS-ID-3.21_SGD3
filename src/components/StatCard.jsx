@@ -2,9 +2,9 @@ import Card from './Card.jsx'
 
 function badgeTone(status) {
   const s = String(status || '').toLowerCase()
-  if (s.includes('good') || s.includes('low') || s.includes('improv')) return 'bg-emerald-50 text-emerald-700 ring-emerald-100'
-  if (s.includes('moderate') || s.includes('medium') || s.includes('watch')) return 'bg-amber-50 text-amber-700 ring-amber-100'
-  if (s.includes('high') || s.includes('unhealthy') || s.includes('elevated')) return 'bg-rose-50 text-rose-700 ring-rose-100'
+  if (s === 'low' || s.includes('good') || s.includes('improv')) return 'bg-emerald-50 text-emerald-700 ring-emerald-100'
+  if (s === 'medium' || s.includes('moderate') || s.includes('watch')) return 'bg-amber-50 text-amber-700 ring-amber-100'
+  if (s === 'high' || s.includes('unhealthy') || s.includes('elevated')) return 'bg-rose-50 text-rose-700 ring-rose-100'
   return 'bg-slate-50 text-slate-700 ring-slate-100'
 }
 

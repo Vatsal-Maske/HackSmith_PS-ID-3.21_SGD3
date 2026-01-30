@@ -7,7 +7,9 @@ export default function Header({ city, onCityChange }) {
         <h1 className="truncate text-lg font-semibold text-slate-900 md:text-xl">
           Air Quality Health Impact Dashboard
         </h1>
-        <div className="mt-1 text-xs text-slate-600">Monitoring air pollution and respiratory risk for urban planning</div>
+        <div className="mt-1 text-xs text-slate-600">
+          Monitoring air pollution and respiratory risk for urban planning • Last updated: {new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
