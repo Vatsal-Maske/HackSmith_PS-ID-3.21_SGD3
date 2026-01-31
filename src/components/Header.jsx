@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { Search, UserCircle2, Loader2, User, Settings, LogOut, ChevronDown } from 'lucide-react'
+import { Search, UserCircle2, Loader2, User, LogOut, ChevronDown } from 'lucide-react'
 import { fetchCities } from '../api/client'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import SignOutButton from './Auth/SignOutButton.jsx'
 
 export default function Header({ city, onCityChange, onNavigate }) {
+  const { user } = useAuth();
   const [allCities, setAllCities] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -147,13 +150,46 @@ export default function Header({ city, onCityChange, onNavigate }) {
             className="flex items-center space-x-2 h-11 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
             aria-label="User Profile"
           >
-            <UserCircle2 size={22} />
+            {/* User Avatar or Default Icon */}
+            {user?.displayName ? (
+              <div className="relative w-8 h-8 group">
+                <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold transition-transform group-hover:scale-105">
+                  {user.displayName.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2)}
+                </div>
+              </div>
+            ) : (
+              <UserCircle2 size={22} />
+            )}
             <ChevronDown size={16} className={`transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
           </button>
 
           {/* Profile Dropdown Menu */}
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+              {/* User Info */}
+              <div className="px-4 py-3 border-b border-gray-200">
+                <div className="flex items-center space-x-3">
+                  <div className="relative w-10 h-10 group">
+                    {user?.displayName ? (
+                      <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold transition-transform group-hover:scale-105">
+                        {user.displayName.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2)}
+                      </div>
+                    ) : (
+                      <UserCircle2 size={40} className="text-gray-400" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {user?.displayName || 'User'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user?.email || 'user@example.com'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Menu Options */}
               <button
                 onClick={() => handleMenuOptionClick('profile')}
                 className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -161,14 +197,16 @@ export default function Header({ city, onCityChange, onNavigate }) {
                 <User size={16} />
                 <span>Profile</span>
               </button>
+              
               <hr className="my-1 border-gray-200" />
-              <button
-                onClick={() => handleMenuOptionClick('logout')}
-                className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-              >
-                <LogOut size={16} />
-                <span>Logout</span>
-              </button>
+              
+              {/* Sign Out Button */}
+              <div className="px-4 py-2">
+                <SignOutButton
+                  onSignOutSuccess={() => setShowProfileMenu(false)}
+                  className="w-full text-sm"
+                />
+              </div>
             </div>
           )}
         </div>

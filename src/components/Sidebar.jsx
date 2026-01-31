@@ -4,14 +4,12 @@ import {
   FileText,
   LayoutDashboard,
   MapPinned,
-  User,
 } from 'lucide-react'
 
 const nav = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'map', label: 'Live AQI Map', icon: MapPinned },
   { key: 'risk', label: 'Disease Risk Analysis', icon: Activity },
-  { key: 'profile', label: 'Profile', icon: User },
   { key: 'reports', label: 'Reports', icon: FileText },
 ]
 
