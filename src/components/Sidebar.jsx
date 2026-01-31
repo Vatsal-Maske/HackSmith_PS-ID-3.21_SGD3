@@ -2,19 +2,17 @@ import {
   Activity,
   BarChart3,
   FileText,
-  KeyRound,
   LayoutDashboard,
   MapPinned,
-  Settings,
+  User,
 } from 'lucide-react'
 
 const nav = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'map', label: 'Live AQI Map', icon: MapPinned },
   { key: 'risk', label: 'Disease Risk Analysis', icon: Activity },
+  { key: 'profile', label: 'Profile', icon: User },
   { key: 'reports', label: 'Reports', icon: FileText },
-  { key: 'api', label: 'API Access', icon: KeyRound },
-  { key: 'settings', label: 'Settings', icon: Settings },
 ]
 
 export default function Sidebar({ activeKey, onChange }) {

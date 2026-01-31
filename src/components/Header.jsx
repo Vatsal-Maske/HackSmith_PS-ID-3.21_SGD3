@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
-import { Search, UserCircle2, Loader2 } from 'lucide-react'
+import { Search, UserCircle2, Loader2, User, Settings, LogOut, ChevronDown } from 'lucide-react'
 import { fetchCities } from '../api/client'
 
-export default function Header({ city, onCityChange }) {
+export default function Header({ city, onCityChange, onNavigate }) {
   const [allCities, setAllCities] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const containerRef = useRef(null);
+  const profileMenuRef = useRef(null);
 
   // Fetch available cities on mount
   useEffect(() => {
@@ -37,10 +39,35 @@ export default function Header({ city, onCityChange }) {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
         setShowSuggestions(false);
       }
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleProfileMenuClick = () => {
+    setShowProfileMenu(!showProfileMenu);
+  };
+
+  const handleMenuOptionClick = (option) => {
+    setShowProfileMenu(false);
+    switch(option) {
+      case 'profile':
+        // Navigate to profile using the parent navigation function
+        if (onNavigate) {
+          onNavigate('profile');
+        }
+        break;
+      case 'logout':
+        // Dummy logout action
+        console.log('Logging out...');
+        break;
+      default:
+        break;
+    }
+  };
 
   const handleInputChange = (e) => {
     const val = e.target.value;
@@ -113,13 +140,38 @@ export default function Header({ city, onCityChange }) {
           )}
         </div>
 
-        <button
-          type="button"
-          className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
-          aria-label="User Profile"
-        >
-          <UserCircle2 size={22} />
-        </button>
+        <div className="relative" ref={profileMenuRef}>
+          <button
+            type="button"
+            onClick={handleProfileMenuClick}
+            className="flex items-center space-x-2 h-11 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
+            aria-label="User Profile"
+          >
+            <UserCircle2 size={22} />
+            <ChevronDown size={16} className={`transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Profile Dropdown Menu */}
+          {showProfileMenu && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+              <button
+                onClick={() => handleMenuOptionClick('profile')}
+                className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <User size={16} />
+                <span>Profile</span>
+              </button>
+              <hr className="my-1 border-gray-200" />
+              <button
+                onClick={() => handleMenuOptionClick('logout')}
+                className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <LogOut size={16} />
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   )
