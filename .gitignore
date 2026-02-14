@@ -7,3 +7,8 @@ node_modules
 backend/.env
 backend/.env.*
 !backend/.env.example
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
