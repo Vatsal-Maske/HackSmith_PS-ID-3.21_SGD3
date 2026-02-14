@@ -130,9 +130,37 @@ export default function DashboardPage({ city }) {
         />
       </div>
 
+
       {/* Row 2: Main Charts & Alerts */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2 h-full">
+        <div className="xl:col-span-2 h-full space-y-6">
+          {/* Gaseous Pollutants Block */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 dark:bg-slate-900 dark:border-slate-800">
+            <h3 className="text-sm font-semibold text-slate-500 mb-4 uppercase tracking-wider dark:text-slate-400">Gaseous Pollutants</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {/* NO2 */}
+              <div>
+                <div className="text-xs text-slate-400 font-medium mb-1">NO₂</div>
+                <div className="text-2xl font-bold text-slate-700 dark:text-slate-200">{aqiData.no2} <span className="text-sm font-normal text-slate-400">µg/m³</span></div>
+              </div>
+              {/* SO2 */}
+              <div>
+                <div className="text-xs text-slate-400 font-medium mb-1">SO₂</div>
+                <div className="text-2xl font-bold text-slate-700 dark:text-slate-200">{aqiData.so2} <span className="text-sm font-normal text-slate-400">µg/m³</span></div>
+              </div>
+              {/* CO */}
+              <div>
+                <div className="text-xs text-slate-400 font-medium mb-1">CO</div>
+                <div className="text-2xl font-bold text-slate-700 dark:text-slate-200">{aqiData.co} <span className="text-sm font-normal text-slate-400">µg/m³</span></div>
+              </div>
+              {/* O3 */}
+              <div>
+                <div className="text-xs text-slate-400 font-medium mb-1">O₃</div>
+                <div className="text-2xl font-bold text-slate-700 dark:text-slate-200">{aqiData.o3} <span className="text-sm font-normal text-slate-400">µg/m³</span></div>
+              </div>
+            </div>
+          </div>
+
           <AqiTrendChart data={aqiTrend7d} />
         </div>
         <div className="xl:col-span-1 h-full">

@@ -17,3 +17,10 @@ body {
 #root {
   height: 100%;
 }
+
+/* Header user icon: style inner circle (persisted from browser preview) */
+.header-user-icon circle {
+  display: flex;
+  flex-wrap: wrap;
+  height: 100%;
+}

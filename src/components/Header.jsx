@@ -118,7 +118,7 @@ export default function Header({ city, onCityChange }) {
           className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
           aria-label="User Profile"
         >
-          <UserCircle2 size={22} />
+          <UserCircle2 size={22} className="header-user-icon" />
         </button>
       </div>
     </header>

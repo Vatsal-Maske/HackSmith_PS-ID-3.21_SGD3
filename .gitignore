@@ -1,1 +1,9 @@
 node_modules
+
+# Environment variables (never commit real API keys)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example

@@ -91,6 +91,10 @@ async function fetchAQIOpenWeather(lat, lon) {
       aqi: calculatedAQI, // Now returns 0-500 scale
       pm2_5: components.pm2_5 || 0,
       pm10: components.pm10 || 0,
+      no2: components.no2 || 0,
+      so2: components.so2 || 0,
+      co: components.co || 0,
+      o3: components.o3 || 0,
       openWeatherIndex: list.main.aqi // Keep original 1-5 index just in case
     };
   } catch (err) {
@@ -111,6 +115,10 @@ async function fetchAQIAQICN(city) {
       aqi: data.aqi,
       pm2_5: iaqi.pm25?.v || 0,
       pm10: iaqi.pm10?.v || 0,
+      no2: iaqi.no2?.v || 0,
+      so2: iaqi.so2?.v || 0,
+      co: iaqi.co?.v || 0,
+      o3: iaqi.o3?.v || 0,
     };
   } catch (err) {
     console.error('AQICN AQI error:', err.message);
@@ -222,6 +230,10 @@ app.get('/api/aqi', async (req, res) => {
       aqi: aqiData.aqi,
       pm2_5: aqiData.pm2_5,
       pm10: aqiData.pm10,
+      no2: aqiData.no2,
+      so2: aqiData.so2,
+      co: aqiData.co,
+      o3: aqiData.o3,
       risk: risk.level,
       message: risk.message,
       last_updated: formatTimestamp(),
